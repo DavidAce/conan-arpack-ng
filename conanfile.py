@@ -7,31 +7,31 @@ import shutil
 class ArpackNG(ConanFile):
     name = "arpack-ng"
     version = "3.7.0"
-    license = "BSD"
+    license = "New BSD"
     url = "https://github.com/opencollab/arpack-ng"
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake"
     build_policy    = 'missing'
     options         = {
-        "shared"            : [True, False],
-        "fPIC"              : [True, False],
-        "blas"              : ['OpenBLAS','MKL','Intel','Intel10_64lp','Intel10_64lp_seq','Intel10_64ilp',
-                               'Intel10_64lp_seq', 'FLAME', 'Goto', 'ATLAS PhiPACK','Generic','All'],
-        "interface64"       : [True,False],
-        "mpi"               : [True,False],
-        "prefer_pkgconfig"  : [True,False],
-        "blas_libraries"    : "ANY",
-        "lapack_libraries"  : "ANY",
+        "shared"                : [True, False],
+        "fPIC"                  : [True, False],
+        "blas"                  : ['OpenBLAS','MKL','Intel','Intel10_64lp','Intel10_64lp_seq','Intel10_64ilp',
+                                   'Intel10_64lp_seq', 'FLAME', 'Goto', 'ATLAS PhiPACK','Generic','All'],
+        "interface64"           : [True,False],
+        "mpi"                   : [True,False],
+        "blas_prefer_pkgconfig" : [True,False],
+        "blas_libraries"        : "ANY",
+        "lapack_libraries"      : "ANY",
     }
     default_options = {
-        "shared"            : False,
-        "fPIC"              : True,
-        "blas"              : "OpenBLAS",
-        "interface64"       : False,
-        "mpi"               : False,
-        "prefer_pkgconfig"  : False,
-        "blas_libraries"    : None,
-        "lapack_libraries"  : None,
+        "shared"                : False,
+        "fPIC"                  : True,
+        "blas"                  : "OpenBLAS",
+        "interface64"           : False,
+        "mpi"                   : False,
+        "blas_prefer_pkgconfig" : False,
+        "blas_libraries"        : None,
+        "lapack_libraries"      : None,
     }
 
     _source_subfolder = "arpack-ng-" + version
@@ -42,16 +42,15 @@ class ArpackNG(ConanFile):
             self.requires("openblas/0.3.7")
 
     def configure(self):
+        if self.settings.compiler == 'Visual Studio':
+            del self.options.fPIC
         if self.options.blas == "MKL":
             self.options.blas = "Intel10_64lp"
         if self.options.blas == "OpenBLAS":
-            self.options["openblas"].build_lapack = True
-            self.options["openblas"].dynamic_arch = False
-            self.options["openblas"].fPIC = self.options.fPIC
-            self.options["openblas"].shared = self.options.shared
+            # Override default of openblas
+            self.options["openblas"].build_lapack   = True
 
     def source(self):
-
         ext = "tar.gz" if tools.os_info.is_linux else "zip"
         md5 = "6fc6c6bf78dbd4f144595ef0675c8430" if tools.os_info.is_linux else "aa3f1ff2645fdec744ecd30461e21291"
         url = "https://github.com/opencollab/arpack-ng/archive/{0}.{1}".format(self.version,ext)
@@ -59,14 +58,14 @@ class ArpackNG(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        cmake.definitions["BUILD_SHARED_LIBS"] = self.options.shared
-        cmake.definitions["BLA_VENDOR"] = self.options.blas
-        cmake.definitions["BLA_STATIC"] = not self.options.shared
-        cmake.definitions["BLA_PREFER_PKGCONFIG"] = self.options.prefer_pkgconfig
-        cmake.definitions["EXAMPLES"] = False
-        cmake.definitions["MPI"] = self.options.mpi
-        cmake.definitions["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
-        cmake.definitions["INTERFACE64"] = self.options.interface64
+        cmake.definitions["EXAMPLES"]               = False
+        cmake.definitions["MPI"]                    = self.options.mpi
+        cmake.definitions["INTERFACE64"]            = self.options.interface64
+        cmake.definitions["BLA_STATIC"]             = not self.options.shared
+        cmake.definitions["BLA_PREFER_PKGCONFIG"]   = self.options.blas_prefer_pkgconfig
+        if not self.options.blas_libraries:
+            cmake.definitions["BLA_VENDOR"]         = self.options.blas
+
         if self.options.blas == "OpenBLAS":
             valid_ext = []
             if self.options.shared:
@@ -100,8 +99,7 @@ class ArpackNG(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = tools.collect_libs(self)
-        self.cpp_info.names["cmake_find_package"] = "arpack-ng"
-        self.cpp_info.names["cmake_find_package_multi"] = "arpack-ng"
-        self.cpp_info.names['pkg_config'] = "arpack-ng"
+        self.cpp_info.system_libs.append("gfortran")
+        self.cpp_info.system_libs.append("quadmath")
         if not self.cpp_info.libs:
             raise Exception("No libs collected")
