@@ -48,6 +48,8 @@ class ArpackNG(ConanFile):
             self.options.blas = "Intel10_64lp"
         if self.options.blas == "OpenBLAS":
             # Override default of openblas
+            self.options["openblas"].shared         = self.options.shared
+            self.options["openblas"].fPIC           = self.options.fPIC
             self.options["openblas"].build_lapack   = True
 
     def source(self):
@@ -63,6 +65,7 @@ class ArpackNG(ConanFile):
         cmake.definitions["INTERFACE64"]            = self.options.interface64
         cmake.definitions["BLA_STATIC"]             = not self.options.shared
         cmake.definitions["BLA_PREFER_PKGCONFIG"]   = self.options.blas_prefer_pkgconfig
+        cmake.definitions["CMAKE_VERBOSE_MAKEFILE"] = True
         if not self.options.blas_libraries:
             cmake.definitions["BLA_VENDOR"]         = self.options.blas
 
@@ -77,6 +80,8 @@ class ArpackNG(ConanFile):
                 for file in os.listdir(path):
                     if "openblas" in file and any(file.endswith(ext) for ext in valid_ext):
                         openblas_libs.append(path + '/' + file)
+            if not openblas_libs:
+                raise ValueError("Could not find any openblas libraries")
             for lib in self.deps_cpp_info["openblas"].system_libs:
                 openblas_libs.append(lib)
 
