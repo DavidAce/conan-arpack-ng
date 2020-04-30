@@ -65,7 +65,6 @@ class ArpackNG(ConanFile):
         cmake.definitions["INTERFACE64"]            = self.options.interface64
         cmake.definitions["BLA_STATIC"]             = not self.options.shared
         cmake.definitions["BLA_PREFER_PKGCONFIG"]   = self.options.blas_prefer_pkgconfig
-        cmake.definitions["CMAKE_VERBOSE_MAKEFILE"] = True
         if not self.options.blas_libraries:
             cmake.definitions["BLA_VENDOR"]         = self.options.blas
 
