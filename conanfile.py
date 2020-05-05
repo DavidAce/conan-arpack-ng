@@ -84,7 +84,7 @@ class ArpackNG(ConanFile):
             for lib in self.deps_cpp_info["openblas"].system_libs:
                 openblas_libs.append(lib)
 
-            openblas_libs=';'.join(str(x) for x in openblas_libs)
+            openblas_libs=';'.join(str(x) for x in openblas_libs) # Consider separating by $<SEMICOLON> instead
             cmake.definitions["BLAS_LIBRARIES"]     = openblas_libs
             cmake.definitions["LAPACK_LIBRARIES"]   = openblas_libs
         # Override
@@ -102,6 +102,8 @@ class ArpackNG(ConanFile):
         self.copy(pattern="COPYING", src=self._source_subfolder, dst="LICENSE")
 
     def package_info(self):
+        if os.path.isdir(self.cpp_info.rootpath + "/lib64"):
+            self.cpp_info.libdirs.append("lib64")
         self.cpp_info.libs = tools.collect_libs(self)
         self.cpp_info.system_libs.append("gfortran")
         self.cpp_info.system_libs.append("quadmath")
