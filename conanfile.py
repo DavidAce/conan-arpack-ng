@@ -6,7 +6,7 @@ import shutil
 
 class ArpackNG(ConanFile):
     name = "arpack-ng"
-    version = "3.7.0"
+    version = "3.8.0"
     license = "New BSD"
     url = "https://github.com/opencollab/arpack-ng"
     settings = "os", "compiler", "build_type", "arch"
@@ -39,7 +39,7 @@ class ArpackNG(ConanFile):
 
     def requirements(self):
         if self.options.blas == "OpenBLAS":
-            self.requires("openblas/0.3.7")
+            self.requires("openblas/0.3.12")
 
     def configure(self):
         if self.settings.compiler == 'Visual Studio':
@@ -54,7 +54,7 @@ class ArpackNG(ConanFile):
 
     def source(self):
         ext = "tar.gz" if tools.os_info.is_linux else "zip"
-        md5 = "6fc6c6bf78dbd4f144595ef0675c8430" if tools.os_info.is_linux else "aa3f1ff2645fdec744ecd30461e21291"
+        md5 = "bb4cf448f2480a0ffe5517d579f980c3" if tools.os_info.is_linux else "02f8dd1e77e5a781c6e29857663c9aea"
         url = "https://github.com/opencollab/arpack-ng/archive/{0}.{1}".format(self.version,ext)
         tools.get(url=url, md5=md5)
 
